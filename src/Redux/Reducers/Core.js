@@ -2,13 +2,14 @@ import { upldateDomList } from "src/Constant"
 import { 
     GET_CATEGORIES, GET_CATEGORIES_FAIL, 
     GET_CATEGORIES_SUCCESS, SAVE_DATA, 
-    SAVE_DATA_FAIL, SAVE_DATA_SUCCESS, SET_CATEGORY_DATA } from "../Type"
+    SAVE_DATA_FAIL, SAVE_DATA_SUCCESS, SET_CATEGORY_DATA, TOGGLE_VIEW_MODAL } from "../Type"
 
 const INITIAL = {
     saveData_loading: false,
     getCategories_loading: false,
     category_data: null,
-    saved_data: null 
+    saved_data: null,
+    viewModalOpen: false
 }
 
 export default (state = INITIAL, action) => {
@@ -58,6 +59,13 @@ export default (state = INITIAL, action) => {
             return {
                 ...state,
                 category_data: category_data
+            }
+        }
+        case TOGGLE_VIEW_MODAL: {
+            const { isOpen } = action.data
+            return {
+                ...state,
+                viewModalOpen: isOpen
             }
         }
         default: 

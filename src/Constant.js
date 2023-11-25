@@ -1,4 +1,5 @@
 
+// update sectors list and highlight selected sectors
 export const upldateDomList = (domList, userCategeries) => {
     const updatedOptionElementStrings = [];
     const contentRegex = /<option.*?>(.*?)<\/option>/s;
@@ -18,4 +19,11 @@ export const upldateDomList = (domList, userCategeries) => {
     return updatedOptionElementStrings
 }
 
+// insert item into string at specific index
+export const insertString = (originalString, index, newString) => {
+    const originalStringArray = originalString.split('');
+    originalStringArray.splice(index, 0, newString);
+    return originalStringArray.join('');
+  }
+  
 

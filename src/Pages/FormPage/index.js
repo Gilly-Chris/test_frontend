@@ -4,22 +4,24 @@ import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { hideSpinner, showSpinner } from "src/Utils/Helper";
 import _ from 'lodash'
-import { saveDataAction, setCategoryData } from "src/Redux/Actions";
+import { saveDataAction, setCategoryData, toggleViewModal } from "src/Redux/Actions";
 import { upldateDomList } from "src/Constant";
 import { toast } from "react-toastify";
-import { join } from "redux-saga/effects";
+import { ViewModal } from "../Components";
 
 export default function FormPage() {
     const dispatch = useDispatch()
     const [name, setName] = useState('')
-    const [selectedCategories, setSelectedCategories] = useState([]) 
-    const [terms, setTerms] = useState(false)
+    const [selectedCategories, setSelectedCategories] = useState([])
+    const [categoryDom, setCategoryDom] = useState([]) 
+    const [terms, setTerms] = useState(true)
 
     const {
         category_data,
         saved_data,
         getCategories_loading,
-        saveData_loading
+        saveData_loading,
+        viewModalOpen
     } = useSelector(state => state.Core)
 
     useEffect(() => {
@@ -27,8 +29,9 @@ export default function FormPage() {
             hideSpinner()
             console.log('=== category data ===', category_data)
             if (!_.isEmpty(category_data)) {
+                setCategoryDom(category_data.category_dom)
                 setSelectedCategories(category_data.categories)
-                setTerms(!_.isEmpty(category_data.categories) && category_data.categories[0] !== '')
+                setTerms(category_data.categories.filter(item => item !== '').length > 0)
                 setName(category_data.name)
             }
         }
@@ -43,32 +46,24 @@ export default function FormPage() {
                 setTerms(true)
             }
         }
-        // const updatedDom = upldateDomList(category_data.category_dom, category_data.categories)
-        // dispatch(setCategoryData({...category_data, category_dom: updatedDom}))
+        if (_.isEmpty(category_data)) return;
+        const updatedDom = upldateDomList(category_data.category_dom, category_data.categories)
+        dispatch(setCategoryData({...category_data, category_dom: updatedDom}))
     }, [dispatch, saveData_loading, saved_data])
 
-    useEffect(() => {
-        if (_.isEmpty(category_data)) return
-        const selectInput = document.getElementById('selectInput');
-        const selectedValues = selectedCategories;
-        console.log(selectedValues)
-        const options = selectInput.options;
-        for (let i = 0; i < options.length; i++) {
-            if (selectedValues.includes(parseInt(options[i].value))) {
-                options[i].selected = true;
-            } else {
-                options[i].selected = false;
-            }
-        }
-    }, [selectedCategories])
+    const categoryList = () => selectedCategories.filter(item => item !== '')
 
-    const getCategoriesData = () => {
-        if (_.isEmpty(category_data)) return '<option value="0">Loading categories....</option>'
-        return category_data.category_dom
-    }
+    const getCategoriesData = () => _.isEmpty(categoryDom) ? '<option value="0">Loading categories....</option>': categoryDom.join('') 
 
+    // handle input select
     const handleSelect = (e) => {
         const value = e.target.value
+        const selectOption = e.target.querySelector(`option[value="${e.target.value}"]`);
+        if (selectOption.hasAttribute('selected')) {
+            selectOption.removeAttribute('selected')
+        } else {
+            selectOption.setAttribute('selected', 'true')
+        }
         const index = selectedCategories.findIndex(function (item) {
             return parseInt(item) === parseInt(value)
         })
@@ -85,11 +80,12 @@ export default function FormPage() {
             toast("please enter your name", "error") 
             return
         }
-        if (selectedCategories && selectedCategories.length === 1) {
-            toast("please select categories")
+        if (categoryList().length === 0) {
+            toast("please select sectors")
             return;
         }
         showSpinner()
+        // const formData = new FormData()
         const data = {
             name: name,
             categories: selectedCategories.join(","),
@@ -101,6 +97,7 @@ export default function FormPage() {
     const handleCheck = () => setTerms(!terms)
 
     return (
+        <>
         <div className="form-wrapper">
             <div className="container">
                 <div className="form-card">
@@ -119,19 +116,17 @@ export default function FormPage() {
                             <Form.Check.Input 
                                 key={Math.random()}
                                 type={'checkbox'} 
-                                isValid 
                                 checked={terms}
                                 onChange={handleCheck}/>
                             <Form.Check.Label>{terms ? "Accepted" : "Agree to terms"}</Form.Check.Label>
-                            {/* <Form.Control.Feedback type="valid">
-                            You did it!
-                            </Form.Control.Feedback> */}
                         </Form.Check>
                         <div className={`btn btn-primary mt-4 ${ terms ? '': 'disabled'}`} onClick={() => submitData()}>Save</div>
-                        {/* <div className="btn btn-secondary mt-2">View Data</div> */}
+                        <div className={`btn btn-secondary mt-2 ${_.isEmpty(category_data) ? 'disabled': ''}`} onClick={() => dispatch(toggleViewModal(true))}>View</div>
                     </div>
                 </div>
             </div>
         </div>
+        { category_data && <ViewModal isOpen={viewModalOpen} onClose={() => dispatch(toggleViewModal(false))} /> }
+        </>
     )
 }
